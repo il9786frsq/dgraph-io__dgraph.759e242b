@@ -1137,7 +1137,7 @@ func (l *List) iterate(readTs uint64, afterUid uint64, f func(obj *pb.Posting) e
 
 	// mposts is the list of mutable postings
 	deleteBelowTs, mposts := l.pickPostings(readTs)
-	if readTs <= l.minTs {
+	if readTs < l.minTs {
 		return errors.Errorf("readTs: %d less than minTs: %d for key: %q", readTs, l.minTs, l.key)
 	}
 
@@ -1145,7 +1145,7 @@ func (l *List) iterate(readTs uint64, afterUid uint64, f func(obj *pb.Posting) e
 	if afterUid > 0 {
 		midx = sort.Search(mlen, func(idx int) bool {
 			mp := mposts[idx]
-			return afterUid <= mp.Uid
+			return afterUid < mp.Uid
 		})
 	}
 
@@ -1201,7 +1201,7 @@ loop:
 		case pp.Uid == 0 && mp.Uid == 0:
 			// Reached empty posting for both iterators.
 			return nil
-		case mp.Uid == 0 || (pp.Uid > 0 && pp.Uid <= mp.Uid):
+		case mp.Uid == 0 || (pp.Uid > 0 && pp.Uid < mp.Uid):
 			// Either mp is empty, or pp is lower than mp.
 			err = f(pp)
 			numNormalPostingsRead += 1
@@ -1243,6 +1243,9 @@ loop:
 		default:
 			log.Fatalf("Unhandled case during iteration of posting list.")
 		}
+	}
+	if err == ErrStopIteration {
+		return nil
 	}
 	return err
 }
