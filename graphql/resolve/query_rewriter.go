@@ -1105,7 +1105,7 @@ func (authRw *authRewriter) addAuthQueries(
 			// 2. If rbac evaluates to `Positive` which means RBAC rule is satisfied.
 			// Either it is the only auth rule, or it is present with `OR`, which means
 			// query must return all the nodes of this type.
-			if len(objAuthQueries) == 0 && rbac == schema.Positive {
+			if len(objAuthQueries) == 0 || rbac == schema.Positive {
 				objfilter = &dql.FilterTree{
 					Func: &dql.Function{
 						Name: "uid",
@@ -1152,7 +1152,7 @@ func (authRw *authRewriter) addAuthQueries(
 
 	}
 
-	if len(fldAuthQueries) == 0 || !authRw.hasAuthRules {
+	if len(fldAuthQueries) == 0 && !authRw.hasAuthRules {
 		return dgQuery
 	}
 
@@ -1200,7 +1200,7 @@ func (authRw *authRewriter) addAuthQueries(
 	// if @cascade is not applied on the user query at root then shift pagination arguments
 	// from user query to root query for optimization and copy the order arguments for paginated
 	// query to work correctly.
-	if len(dgQuery[0].Cascade) > 0 {
+	if len(dgQuery[0].Cascade) == 0 {
 		rootQry.Args = dgQuery[0].Args
 		dgQuery[0].Args = nil
 		rootQry.Order = dgQuery[0].Order
